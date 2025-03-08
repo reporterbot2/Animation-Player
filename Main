@@ -1,0 +1,116 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local playerGui = player:WaitForChild("PlayerGui")
+local userInputService = game:GetService("UserInputService")
+ 
+-- Create GUI elements
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+ 
+-- Create the main frame with reduced height
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.25, 0, 0.2, 0)  -- Reduced height from 0.3 to 0.2
+frame.Position = UDim2.new(0.1, 0, 0.4, 0)  -- Adjusted position to accommodate new height
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.5
+frame.Parent = screenGui
+ 
+-- Create a label for the textbox
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, -10, 0.2, 0)
+label.Position = UDim2.new(0, 5, 0, 5)
+label.Text = "Enter Animation ID"
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+label.BackgroundTransparency = 0.5
+label.TextScaled = true
+label.Parent = frame
+ 
+-- Create a textbox
+local textbox = Instance.new("TextBox")
+textbox.Size = UDim2.new(1, -10, 0.2, 0)
+textbox.Position = UDim2.new(0, 5, 0.2, 5)
+textbox.Text = ""
+textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+textbox.ClearTextOnFocus = false
+textbox.Parent = frame
+ 
+-- Create a button to play animation
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, -10, 0.2, 0)
+button.Position = UDim2.new(0, 5, 0.4, 5)
+button.Text = "Play Animation"
+button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+button.TextColor3 = Color3.fromRGB(0, 0, 0)
+button.Parent = frame
+ 
+-- Create a close button for the main frame
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0.1, 0, 0.1, 0)
+closeButton.Position = UDim2.new(1, -20, 0, 5)
+closeButton.Text = "X"
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.Parent = frame
+ 
+-- Function to make the frame draggable
+local function makeFrameDraggable(frame)
+    local dragging = false
+    local dragStart
+    local startPos
+ 
+    local function updateDrag(input)
+        local delta = input.Position - dragStart
+        local newPos = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+ 
+        frame.Position = newPos
+    end
+ 
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+ 
+    userInputService.InputChanged:Connect(function(input)
+        if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) and dragging then
+            updateDrag(input)
+        end
+    end)
+end
+ 
+-- Make the main frame draggable
+makeFrameDraggable(frame)
+ 
+-- Button click event to play animation
+button.MouseButton1Click:Connect(function()
+    local animationId = textbox.Text
+    if tonumber(animationId) then
+        local animation = Instance.new("Animation")
+        animation.AnimationId = "rbxassetid://" .. animationId
+ 
+        if character and character:FindFirstChildOfClass("Humanoid") then
+            local humanoid = character.Humanoid
+            local animTrack = humanoid:LoadAnimation(animation)
+            animTrack:Play()
+        end
+    else
+        warn("Invalid Animation ID")
+    end
+end)
+ 
+-- Close button click event for the main frame
+closeButton.MouseButton1Click:Connect(function()
+    frame:Destroy()  -- Deletes the frame
+end)
